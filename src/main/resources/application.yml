@@ -1,0 +1,144 @@
+spring:
+  application:
+    name: EnterpriseIAM
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    # Production URL must use sslmode=verify-full and the trusted CA certificate.
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      pool-name: enterprise-iam
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: 3000
+      validation-timeout: 1000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    # Separate schema-owner credentials; runtime DB user receives DML only.
+    url: ${DB_URL}
+    user: ${FLYWAY_USERNAME}
+    password: ${FLYWAY_PASSWORD}
+    default-schema: iam
+    schemas: iam
+    create-schemas: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: false
+    out-of-order: false
+  sql:
+    init:
+      mode: never
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: iam
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 32
+        query:
+          fail_on_pagination_over_collection_fetch: true
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE:0}
+      client-type: lettuce
+      connect-timeout: 2s
+      timeout: 1s
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:true}
+      repositories:
+        enabled: false
+  elasticsearch:
+    # Use https:// endpoints and a create-only audit writer account in production.
+    uris: ${ELASTICSEARCH_URIS}
+    username: ${ELASTICSEARCH_USERNAME}
+    password: ${ELASTICSEARCH_PASSWORD}
+    connection-timeout: 2s
+    socket-timeout: 5s
+  mvc:
+    problemdetails:
+      enabled: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+      fail-on-trailing-tokens: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  # Enable forwarded-header handling only with an explicitly trusted proxy setup.
+  forward-headers-strategy: none
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: "OFF"
+    org.springframework.security: INFO
+    # Framework DEBUG may include rejected validation values and request bodies.
+    org.springframework.web: INFO
+
+iam:
+  auth:
+    rate-limit:
+      limit: 20
+      window: 60s
+      key: ${IAM_AUTH_RATE_LIMIT_KEY}
+  audit:
+    dispatcher-enabled: ${IAM_AUDIT_DISPATCHER_ENABLED:true}
+    poll-interval: 5s
+    batch-size: 50
+    lease-duration: 60s
+    retry-base-delay: 5s
+    retry-max-delay: 1h
+    retry-alert-threshold: 10
+    worker-count: 2
+    queue-capacity: 32
+  security:
+    issuer: ${IAM_JWT_ISSUER}
+    audience: ${IAM_JWT_AUDIENCE}
+    key-id: ${IAM_JWT_KEY_ID}
+    private-key: ${IAM_JWT_PRIVATE_KEY}
+    public-key: ${IAM_JWT_PUBLIC_KEY}
+    access-token-ttl: 5m
+    clock-skew: 30s
+  tokens:
+    refresh-token-ttl: 30d
+  abac:
+    zone-id: ${IAM_ABAC_ZONE_ID:UTC}
+    allowed-days: MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY
+    opening-time: "09:00"
+    closing-time: "17:00"
+    # Intentionally deny all resource access until deployment supplies trusted networks.
+    allowed-cidrs: ${IAM_ABAC_ALLOWED_CIDRS:}

@@ -1,0 +1,12 @@
+/target/
+/.idea/
+/.vscode/
+*.iml
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.jks
+*.log
+/.local/

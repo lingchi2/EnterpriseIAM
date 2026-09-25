@@ -1,0 +1,13 @@
+{
+  "cluster": [],
+  "indices": [
+    {
+      "names": ["enterpriseiam-audit-*"],
+      "privileges": ["create_doc"],
+      "allow_restricted_indices": false
+    }
+  ],
+  "applications": [],
+  "run_as": [],
+  "metadata": {"purpose": "EnterpriseIAM append-only audit writer"}
+}

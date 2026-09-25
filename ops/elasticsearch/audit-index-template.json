@@ -1,0 +1,30 @@
+{
+  "index_patterns": ["enterpriseiam-audit-*"],
+  "priority": 300,
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "refresh_interval": "5s"
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "id": {"type": "keyword"},
+        "invocationId": {"type": "keyword"},
+        "occurredAt": {"type": "date", "format": "date_optional_time"},
+        "action": {"type": "keyword"},
+        "phase": {"type": "keyword"},
+        "actorId": {"type": "keyword"},
+        "method": {"type": "keyword"},
+        "arguments": {"type": "object", "enabled": false},
+        "remoteAddress": {"type": "keyword"},
+        "userAgent": {"type": "keyword", "index": false},
+        "requestMethod": {"type": "keyword"},
+        "requestPath": {"type": "keyword"},
+        "outcomeType": {"type": "keyword"}
+      }
+    }
+  },
+  "_meta": {"description": "Preprovision daily UTC concrete indices; never use rollover aliases for this writer"}
+}
